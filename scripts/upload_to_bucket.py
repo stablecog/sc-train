@@ -3,7 +3,9 @@ from watchdog.events import FileSystemEventHandler
 import os
 import time
 import argparse
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+from azure.storage.blob import BlobServiceClient
+
+FILE_EXTENSION = ".safetensors"
 
 
 class Watcher:
@@ -17,11 +19,11 @@ class Watcher:
         self.observer.start()
         try:
             while True:
-                print("🚨 Observer is live.")
+                print("Observer is live.")
                 time.sleep(30)
         except KeyboardInterrupt:
             self.observer.stop()
-            print("💀 Observer stopped")
+            print("Observer stopped")
 
 
 class Handler(FileSystemEventHandler):
@@ -33,8 +35,11 @@ class Handler(FileSystemEventHandler):
         if event.is_directory:
             for root, dirs, files in os.walk(event.src_path):
                 for file in files:
+                    if not file.endswith(FILE_EXTENSION):
+                        continue
+
                     file_path = os.path.join(root, file)
-                    blob_name = os.path.relpath(file_path, start=args.directory)
+                    blob_name = os.path.basename(file_path)
                     blob_client = blob_service_client.get_blob_client(
                         container=args.bucket, blob=blob_name
                     )
@@ -45,31 +50,34 @@ class Handler(FileSystemEventHandler):
 
                     with open(file_path, "rb") as f:
                         blob_client.upload_blob(f)
-                    print(f"✅ Uploaded: {blob_name}")
+                    print(f"Uploaded {blob_name}")
         else:
+            if not event.src_path.endswith(FILE_EXTENSION):
+                return
+
             file_path = event.src_path
-            blob_name = os.path.relpath(file_path, start=args.directory)
-            blob_client = blob_service_client.get_container_client(
+            blob_name = os.path.basename(file_path)
+            blob_client = blob_service_client.get_blob_client(
                 container=args.bucket, blob=blob_name
             )
 
             if blob_client.exists():
-                print(f"⏩ Already exists in Azure Blob, skipping: {blob_name}")
+                print(f"{blob_name} already exists in Azure Blob. Skipping.")
                 return
 
             with open(file_path, "rb") as f:
                 blob_client.upload_blob(f)
-            print(f"✅ Uploaded: {blob_name}")
-
-    def on_created(self, event):
-        self.process(event)
+            print(f"Uploaded {blob_name}")
 
 
 def initial_upload(directory, blob_service_client, bucket):
     for root, dirs, files in os.walk(directory):
         for file in files:
+            if not file.endswith(FILE_EXTENSION):
+                continue
+
             file_path = os.path.join(root, file)
-            blob_name = os.path.relpath(file_path, start=directory)
+            blob_name = os.path.basename(file_path)
             blob_client = blob_service_client.get_blob_client(
                 container=bucket, blob=blob_name
             )
@@ -85,7 +93,7 @@ def initial_upload(directory, blob_service_client, bucket):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Watch a directory and upload new files to Azure Blob Storage."
+        description=f"Watch a directory and upload new {FILE_EXTENSION} files to Azure Blob Storage."
     )
     parser.add_argument(
         "-c", "--connection-string", required=True, help="Azure connection string."
