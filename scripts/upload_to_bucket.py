@@ -49,7 +49,7 @@ class Handler(FileSystemEventHandler):
         else:
             file_path = event.src_path
             blob_name = os.path.relpath(file_path, start=args.directory)
-            blob_client = blob_service_client.get_blob_client(
+            blob_client = blob_service_client.get_container_client(
                 container=args.bucket, blob=blob_name
             )
 
