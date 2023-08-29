@@ -89,7 +89,7 @@ def main():
 
         print(f"Downloaded {base_name}.{ext} and created {base_name}.txt")
 
-    print("Download and processing completed.")
+    print("✅ Download and processing completed.")
 
 
 if __name__ == "__main__":
