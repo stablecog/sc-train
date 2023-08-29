@@ -87,6 +87,8 @@ def main():
         with open(os.path.join(download_folder, f"{base_name}.txt"), "w") as f:
             f.write(caption_text)
 
+        print(f"Downloaded {base_name}.{ext} and created {base_name}.txt")
+
     print("Download and processing completed.")
 
 
