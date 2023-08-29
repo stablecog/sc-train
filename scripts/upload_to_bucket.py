@@ -18,19 +18,19 @@ def upload_files(directory, blob_service_client, bucket, known_files):
             file_path = os.path.join(root, file)
             blob_name = os.path.basename(file_path)
 
-            if blob_name in existing_blobs:
-                print(f"{blob_name} already exists in Azure Blob. Skipping.")
-                known_files.add(blob_name)
+            if blob_name in known_files:
                 continue
 
-            if blob_name in known_files:
+            if blob_name in existing_blobs:
+                print(f"⏩ Already exists in Azure Blob, skipping: {blob_name}")
+                known_files.add(blob_name)
                 continue
 
             blob_client = container_client.get_blob_client(blob_name)
             with open(file_path, "rb") as f:
                 blob_client.upload_blob(f)
 
-            print(f"Uploaded {blob_name}")
+            print(f"✅ Uploaded {blob_name}")
             known_files.add(blob_name)
 
 
@@ -54,6 +54,6 @@ if __name__ == "__main__":
     known_files = set()
 
     while True:
-        print("Observer is live.")
+        print("🚨 Observer is live.")
         upload_files(args.directory, blob_service_client, args.bucket, known_files)
         time.sleep(30)
