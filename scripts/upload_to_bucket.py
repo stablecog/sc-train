@@ -3,7 +3,7 @@ import time
 import argparse
 from azure.storage.blob import BlobServiceClient
 
-FILE_EXTENSIONS = [".safetensors", ".anotherextension"]
+FILE_EXTENSIONS = [".safetensors", ".json"]
 
 
 def upload_files(directory, blob_service_client, bucket, known_files):
