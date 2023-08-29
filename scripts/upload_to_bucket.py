@@ -54,6 +54,6 @@ if __name__ == "__main__":
     known_files = set()
 
     while True:
-        print("🚨 Observer is live.")
+        print("🚨 Observer is live...")
         upload_files(args.directory, blob_service_client, args.bucket, known_files)
         time.sleep(30)
