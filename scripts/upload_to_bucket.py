@@ -3,13 +3,13 @@ import time
 import argparse
 from azure.storage.blob import BlobServiceClient
 
-FILE_EXTENSION = ".safetensors"
+FILE_EXTENSIONS = [".safetensors", ".json"]
 
 
 def upload_files(directory, blob_service_client, bucket, known_files):
     for root, _, files in os.walk(directory):
         for file in files:
-            if not file.endswith(FILE_EXTENSION):
+            if not any(file.endswith(ext) for ext in FILE_EXTENSIONS):
                 continue
 
             file_path = os.path.join(root, file)
@@ -37,7 +37,7 @@ def upload_files(directory, blob_service_client, bucket, known_files):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description=f"Watch a directory and upload new {FILE_EXTENSION} files to Azure Blob Storage."
+        description=f"Watch a directory and upload new files with specified extensions to Azure Blob Storage."
     )
     parser.add_argument(
         "-c", "--connection-string", required=True, help="Azure connection string."
