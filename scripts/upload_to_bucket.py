@@ -64,7 +64,7 @@ def upload_files(directory, blob_service_client, bucket, known_files, discord_ur
             known_files.add(blob_name)
 
             if discord_url:
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                timestamp = time.strftime("%Y-%m-%d • %H:%M:%S UTC")
                 send_discord_notification(discord_url, blob_name, bucket, timestamp)
 
 
