@@ -31,7 +31,7 @@ def send_discord_notification(discord_url, blob_name, bucket, timestamp):
 
     r = requests.post(discord_url, json=payload, headers=headers)
     if r.status_code == 204:
-        print("✉️ Sent Discord notification")
+        print("🖥️ Sent Discord notification")
     else:
         print(f"❌ Failed to send Discord notification: {r.text}")
 
