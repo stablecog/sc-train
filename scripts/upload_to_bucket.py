@@ -1,12 +1,42 @@
 import os
 import time
 import argparse
+import requests
 from azure.storage.blob import BlobServiceClient
 
 FILE_EXTENSIONS = [".safetensors", ".json"]
 
 
-def upload_files(directory, blob_service_client, bucket, known_files):
+def send_discord_notification(discord_url, blob_name, bucket, timestamp):
+    embed = {
+        "title": "Training Epoch Uploaded",
+        "color": 11437547,
+        "fields": [
+            {
+                "name": "File Name",
+                "value": blob_name,
+            },
+            {
+                "name": "Bucket",
+                "value": bucket,
+            },
+            {
+                "name": "Timestamp",
+                "value": timestamp,
+            },
+        ],
+    }
+    payload = {"embeds": [embed]}
+    headers = {"Content-Type": "application/json"}
+
+    r = requests.post(discord_url, json=payload, headers=headers)
+    if r.status_code == 204:
+        print("✉️ Sent Discord notification")
+    else:
+        print(f"❌ Failed to send Discord notification: {r.text}")
+
+
+def upload_files(directory, blob_service_client, bucket, known_files, discord_url=None):
     container_client = blob_service_client.get_container_client(bucket)
     existing_blobs = {blob.name for blob in container_client.list_blobs()}
 
@@ -33,6 +63,10 @@ def upload_files(directory, blob_service_client, bucket, known_files):
             print(f"✅ Uploaded {blob_name}")
             known_files.add(blob_name)
 
+            if discord_url:
+                timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+                send_discord_notification(discord_url, blob_name, bucket, timestamp)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -45,6 +79,9 @@ if __name__ == "__main__":
         "-b", "--bucket", required=True, help="Azure Blob Storage container name."
     )
     parser.add_argument("-d", "--directory", required=True, help="Directory to watch.")
+    parser.add_argument(
+        "-u", "--discord-channel-url", help="Discord channel webhook URL."
+    )
 
     args = parser.parse_args()
     blob_service_client = BlobServiceClient.from_connection_string(
@@ -55,5 +92,11 @@ if __name__ == "__main__":
 
     while True:
         print("🚨 Observer is live...")
-        upload_files(args.directory, blob_service_client, args.bucket, known_files)
+        upload_files(
+            args.directory,
+            blob_service_client,
+            args.bucket,
+            known_files,
+            args.discord_channel_url,
+        )
         time.sleep(30)
